@@ -6,18 +6,24 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.security.oauth2.provider.authentication.OAuth2AuthenticationDetails;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
+import pl.milosz.springbootspotify.entity.Track;
 import pl.milosz.springbootspotify.models.SpotifyAlbum;
 import pl.milosz.springbootspotify.models.dto.SpotifyAlbumDto;
+import pl.milosz.springbootspotify.repository.TrackRepo;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 @RestController
 public class SpotifyAlbumClient {
+
+    private TrackRepo trackRepo;
+
+    SpotifyAlbumClient(TrackRepo trackRepo) {
+        this.trackRepo = trackRepo;
+    }
 
     @GetMapping("/album/{authorName}")
     public List<SpotifyAlbumDto> getAlbumByAuthor(OAuth2Authentication details, @PathVariable String authorName) {
@@ -35,10 +41,15 @@ public class SpotifyAlbumClient {
 
         List<SpotifyAlbumDto> spotifyAlbumDtos =
                 exchange.getBody().
-                    getTracks().getItems().stream()
-                    .map( item -> new SpotifyAlbumDto(item.getName(), item.getAlbum().getImages().get(0).getUrl()))
-                    .collect(Collectors.toList());
+                        getTracks().getItems().stream()
+                        .map(item -> new SpotifyAlbumDto(item.getName(), item.getAlbum().getImages().get(0).getUrl()))
+                        .collect(Collectors.toList());
 
-         return spotifyAlbumDtos;
+        return spotifyAlbumDtos;
+    }
+
+    @PostMapping("/add-track")
+    public void addTrack(@RequestBody Track track) {
+        trackRepo.save(track);
     }
 }
